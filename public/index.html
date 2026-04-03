@@ -1,1 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NEXA Block Feed Visualization">
+  <meta name="web" content="https://nexafeed.nota.deno.net">
+  <meta property="og:title" content="NEXA Block Feed">
+  <meta property="og:description" content="NEXA Block Feed Visualization">
+  <title>NEXA Block Feed</title>
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #000000;
+      --surface: #0d0d0d;
+      --border: #2a2a2a;
+      --dim: #555;
+      --muted: #888;
+      --text: #e0e0e0;
+      --bright: #ffffff;
+      --accent: #00e5ff;
+      --accent2: #ff6b00;
+      --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+      --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── SCANLINE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.06) 2px,
+          rgba(0, 0, 0, 0.06) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── LAYOUT ── */
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 28px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: var(--font-ui);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--bright);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+
+    .dot.live {
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .dot.error {
+      background: var(--accent2);
+      box-shadow: 0 0 6px var(--accent2);
+    }
+
+    /* ── HERO STATS ── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr;
+      gap: 0;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .divider-v {
+      background: var(--border);
+    }
+
+    .stat {
+      padding: 0 28px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s, transform 0.4s;
+    }
+
+    .stat:first-child {
+      padding-left: 0;
+    }
+
+    .stat:last-child {
+      padding-right: 0;
+    }
+
+    .stat.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-family: var(--font-ui);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--bright);
+      letter-spacing: -0.02em;
+      transition: color 0.15s;
+    }
+
+    .stat-value.flash {
+      color: var(--accent);
+    }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── BLOCK FEED ── */
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0 12px;
+    }
+
+    .feed-title {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .feed-count {
+      font-size: 12px;
+      color: var(--dim);
+    }
+
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .block-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 120px 150px;
+      align-items: center;
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid transparent;
+      cursor: default;
+      transition: border-color 0.2s, background 0.2s;
+      animation: slideIn 0.3s ease both;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .block-row:hover {
+      background: #141414;
+      border-color: var(--border);
+    }
+
+    .block-row.new-block {
+      animation: flashIn 0.6s ease both;
+    }
+
+    @keyframes flashIn {
+      0% {
+        background: rgba(0, 229, 255, 0.1);
+        border-color: var(--accent);
+      }
+
+      100% {
+        background: var(--surface);
+        border-color: transparent;
+      }
+    }
+
+    .block-height {
+      font-weight: 500;
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .block-bar-wrap {
+      padding: 0 16px;
+    }
+
+    .block-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .block-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0.6;
+    }
+
+    .block-txcount {
+      text-align: right;
+      color: var(--bright);
+      font-size: 14px;
+    }
+
+    .block-txcount span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .block-time {
+      text-align: right;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ── PULSE RING ── */
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(2.2);
+        opacity: 0;
+      }
+    }
+
+    .dot-wrap {
+      position: relative;
+      width: 7px;
+      height: 7px;
+    }
+
+    .dot-wrap .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      animation: pulse-ring 1.8s ease-out infinite;
+      opacity: 0;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 16px 0 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--dim);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── TICKER TAPE ── */
+    .ticker {
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 0;
+      position: relative;
+    }
+
+    .ticker::before,
+    .ticker::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 40px;
+      z-index: 2;
+    }
+
+    .ticker::before {
+      left: 0;
+      background: linear-gradient(90deg, var(--bg), transparent);
+    }
+
+    .ticker::after {
+      right: 0;
+      background: linear-gradient(-90deg, var(--bg), transparent);
+    }
+
+    .ticker-inner {
+      display: flex;
+      gap: 40px;
+      white-space: nowrap;
+      animation: ticker 30s linear infinite;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    @keyframes ticker {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      gap: 8px;
+    }
+
+    .ticker-item b {
+      color: var(--text);
+    }
+
+    /* ── ROCKET LANE ── */
+    .rocket-lane {
+      position: relative;
+      height: 72px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .rocket {
+      position: absolute;
+      font-size: 20px;
+      top: 0;
+      left: -40px;
+      animation: fly linear forwards;
+      will-change: transform;
+      user-select: none;
+      line-height: 1;
+    }
+
+    @keyframes fly {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(calc(100vw + 80px));
+      }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .hero {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .divider-v {
+        display: none;
+      }
+
+      .stat {
+        padding: 0;
+      }
+
+      .block-row {
+        grid-template-columns: 80px 1fr 90px;
+      }
+
+      .block-time {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo"><img src="./nexa-logo-mark.png" alt="Nexa" width="64"> NEXA<span> BLOCK </span>FEED</div>
+      <div class="status-bar">
+        <div class="dot-wrap" id="dotWrap">
+          <div class="dot" id="dot"></div>
+        </div>
+        <span id="statusText">CONNECTING</span>
+      </div>
+    </header>
+
+    <!-- TICKER -->
+    <div class="ticker">
+      <div class="ticker-inner" id="ticker">
+        <span class="ticker-item"><b>NEXA</b> BLOCK FEED</span>
+        <span class="ticker-item"><b>NETWORK</b> LIVE MONITOR</span>
+        <span class="ticker-item"><b>AVG BLOCK</b> ~2 MIN</span>
+        <span class="ticker-item"><b>ROSTRUM</b> ELECTRUM PROTOCOL</span>
+        <span class="ticker-item"><b>NEXA</b> BLOCK FEED</span>
+        <span class="ticker-item"><b>NETWORK</b> LIVE MONITOR</span>
+        <span class="ticker-item"><b>AVG BLOCK</b> ~2 MIN</span>
+        <span class="ticker-item"><b>ROSTRUM</b> ELECTRUM PROTOCOL</span>
+      </div>
+    </div>
+
+    <!-- ROCKET LANE -->
+    <div class="rocket-lane" id="rocketLane"></div>
+
+    <!-- MAIN -->
+    <main>
+      <!-- HERO STATS -->
+      <div class="hero">
+        <div class="stat" id="statHeight">
+          <div class="stat-label">Latest Block</div>
+          <div class="stat-value" id="valHeight">—</div>
+          <div class="stat-sub">height</div>
+        </div>
+        <div class="divider-v"></div>
+        <div class="stat" id="statTx">
+          <div class="stat-label">Transactions</div>
+          <div class="stat-value" id="valTx">—</div>
+          <div class="stat-sub">in last block</div>
+        </div>
+        <div class="divider-v"></div>
+        <div class="stat" id="statTime">
+          <div class="stat-label">Block Time</div>
+          <div class="stat-value" id="valTime">—</div>
+          <div class="stat-sub" id="valTimeAgo"></div>
+        </div>
+      </div>
+
+      <!-- FEED -->
+      <div class="feed-header">
+        <div class="feed-title">Block History</div>
+        <div class="feed-count" id="feedCount">0 blocks</div>
+      </div>
+      <div class="feed" id="feed">
+        <div class="empty" id="emptyState">WAITING FOR BLOCKS…</div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <span>NEXA BLOCKCHAIN BLOCK FEED VISUALIZATION by NOTA</span>
+      <span id="footerTs">—</span>
+    </footer>
+
+  </div>
+
+  <script>
+    // ── STATE ──
+    const MAX_ROWS = 10;
+    const blocks = [];
+
+    // ── DOM ──
+    const dot = document.getElementById('dot');
+    const dotWrap = document.getElementById('dotWrap');
+    const statusText = document.getElementById('statusText');
+    const valHeight = document.getElementById('valHeight');
+    const valTx = document.getElementById('valTx');
+    const valTime = document.getElementById('valTime');
+    const valTimeAgo = document.getElementById('valTimeAgo');
+    const feed = document.getElementById('feed');
+    const feedCount = document.getElementById('feedCount');
+    const emptyState = document.getElementById('emptyState');
+    const footerTs = document.getElementById('footerTs');
+    const rocketLane = document.getElementById('rocketLane');
+
+    // Stagger hero stats in
+    setTimeout(() => document.getElementById('statHeight').classList.add('visible'), 100);
+    setTimeout(() => document.getElementById('statTx').classList.add('visible'), 220);
+    setTimeout(() => document.getElementById('statTime').classList.add('visible'), 340);
+
+    // ── ROCKETS ──
+    const MAX_ROCKETS = 100;
+    const STAGGER_MS = 180; // delay between each rocket launch
+
+    function launchRockets(txCount) {
+      const count = Math.min(Math.max(txCount, 1), MAX_ROCKETS);
+      const laneH = rocketLane.clientHeight;
+
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const el = document.createElement('span');
+          el.className = 'rocket';
+          el.textContent = '🚀';
+
+          // random vertical position within lane with padding
+          const topPx = 8 + Math.random() * (laneH - 36);
+          // random speed 6.5s – 8.5s
+          const dur = (6500 + Math.random() * 2000).toFixed(0);
+
+          el.style.top = `${topPx}px`;
+          el.style.animationDuration = `${dur}ms`;
+
+          rocketLane.appendChild(el);
+
+          // clean up after animation completes
+          el.addEventListener('animationend', () => el.remove(), { once: true });
+        }, i * STAGGER_MS);
+      }
+    }
+
+    // ── SOCKET ──
+    const es = new EventSource("/stream");
+
+    es.onopen = () => setStatus("live", "LIVE");
+    es.onerror = () => setStatus("error", "DISCONNECTED");
+    es.onmessage = (e) => {
+      const block = JSON.parse(e.data);
+      addBlock(block, true);
+      updateHero(block);
+      updateFooter();
+      if (block.txCount) launchRockets(block.txCount);
+    };
+
+    // ── STATUS ──
+    function setStatus(state, label) {
+      dot.className = 'dot ' + state;
+      statusText.textContent = label;
+
+      if (state === 'live') {
+        const ring = document.createElement('div');
+        ring.className = 'ring';
+        dotWrap.appendChild(ring);
+        setTimeout(() => ring.remove(), 2000);
+      }
+    }
+
+    // ── HERO ──
+    function updateHero(block) {
+      const ts = new Date(block.timestamp);
+
+      flashValue(valHeight, fmt(block.height));
+      flashValue(valTx, fmt(block.txCount));
+
+      valTime.textContent = ts.toLocaleTimeString('en-US', { hour12: false });
+      valTimeAgo.textContent = timeAgo(ts);
+    }
+
+    function flashValue(el, val) {
+      el.textContent = val;
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 400);
+    }
+
+    // ── FEED ROW ──
+    function addBlock(block, isNew = false) {
+      if (emptyState) emptyState.remove();
+
+      blocks.unshift(block);
+      if (blocks.length > MAX_ROWS) blocks.pop();
+
+      const maxTx = Math.max(...blocks.map(b => b.txCount), 1);
+      const pct = Math.round((block.txCount / maxTx) * 100);
+
+      const row = document.createElement('div');
+      row.className = 'block-row' + (isNew ? ' new-block' : '');
+      row.innerHTML = `
+      <div class="block-height">#${fmt(block.height)}</div>
+      <div class="block-bar-wrap">
+        <div class="block-bar">
+          <div class="block-bar-fill" style="width:0%" data-pct="${pct}"></div>
+        </div>
+      </div>
+      <div class="block-txcount">${fmt(block.txCount)} <span>tx</span></div>
+      <div class="block-time">${fmtTime(block.timestamp)}</div>
+    `;
+
+      feed.insertBefore(row, feed.firstChild);
+
+      // animate bar after paint
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          row.querySelector('.block-bar-fill').style.width = pct + '%';
+        });
+      });
+
+      // trim old rows
+      while (feed.children.length > MAX_ROWS) {
+        feed.removeChild(feed.lastChild);
+      }
+
+      feedCount.textContent = `${blocks.length} block${blocks.length !== 1 ? 's' : ''}`;
+
+      // rescale all bars
+      rescaleBars();
+    }
+
+    function rescaleBars() {
+      const maxTx = Math.max(...blocks.map(b => b.txCount), 1);
+      const rows = feed.querySelectorAll('.block-row');
+      rows.forEach((row, i) => {
+        const fill = row.querySelector('.block-bar-fill');
+        if (fill && blocks[i]) {
+          fill.style.width = Math.round((blocks[i].txCount / maxTx) * 100) + '%';
+        }
+      });
+    }
+
+    // ── FOOTER ──
+    function updateFooter() {
+      footerTs.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    }
+
+    // ── UTILS ──
+    function fmt(n) {
+      return Number(n).toLocaleString('en-US');
+    }
+
+    function fmtTime(iso) {
+      return new Date(iso).toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+    }
+
+    function timeAgo(date) {
+      const s = Math.floor((Date.now() - date) / 1000);
+      if (s < 60) return `${s}s ago`;
+      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+      return `${Math.floor(s / 3600)}h ago`;
+    }
+
+    // live timeAgo refresh
+    setInterval(() => {
+      if (blocks[0]) valTimeAgo.textContent = timeAgo(new Date(blocks[0].timestamp));
+    }, 10_000);
+  </script>
+</body>
+
+</html>
