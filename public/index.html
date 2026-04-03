@@ -1,15 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="NEXA Block Feed Visualization">
   <meta name="web" content="https://nexafeed.nota.deno.net">
   <meta property="og:title" content="NEXA Block Feed">
   <meta property="og:description" content="NEXA Block Feed Visualization">
   <title>NEXA Block Feed</title>
-
   <style>
     *,
     *::before,
@@ -20,17 +20,17 @@
     }
 
     :root {
-      --bg: #000000;
+      --bg: #000;
       --surface: #0d0d0d;
       --border: #2a2a2a;
       --dim: #555;
       --muted: #888;
       --text: #e0e0e0;
-      --bright: #ffffff;
+      --bright: #fff;
       --accent: #00e5ff;
       --accent2: #ff6b00;
-      --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-      --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, monospace;
+      --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     html,
@@ -38,31 +38,23 @@
       height: 100%;
       background: var(--bg);
       color: var(--text);
-      font-family: var(--font-mono);
+      font-family: var(--mono);
       font-size: 15px;
       line-height: 1.6;
       overflow-x: hidden;
     }
 
-    /* ── SCANLINE OVERLAY ── */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(0deg,
-          transparent,
-          transparent 2px,
-          rgba(0, 0, 0, 0.06) 2px,
-          rgba(0, 0, 0, 0.06) 4px);
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+          rgba(0, 0, 0, 0.06) 2px, rgba(0, 0, 0, 0.06) 4px);
       pointer-events: none;
       z-index: 9999;
     }
 
-    /* ── LAYOUT ── */
     .shell {
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: 100vh;
       max-width: 960px;
       margin: 0 auto;
       padding: 0 24px;
@@ -71,14 +63,14 @@
     /* ── HEADER ── */
     header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
-      padding: 28px 0 20px;
+      padding: 24px 0 18px;
       border-bottom: 1px solid var(--border);
     }
 
     .logo {
-      font-family: var(--font-ui);
+      font-family: var(--ui);
       font-size: 24px;
       font-weight: 800;
       letter-spacing: -0.02em;
@@ -92,11 +84,17 @@
     .status-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      gap: 8px;
+      font-size: 12px;
       color: var(--muted);
       letter-spacing: 0.06em;
       text-transform: uppercase;
+    }
+
+    .dot-wrap {
+      position: relative;
+      width: 7px;
+      height: 7px;
     }
 
     .dot {
@@ -117,198 +115,6 @@
       box-shadow: 0 0 6px var(--accent2);
     }
 
-    /* ── HERO STATS ── */
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr 1px 1fr 1px 1fr;
-      gap: 0;
-      padding: 32px 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .divider-v {
-      background: var(--border);
-    }
-
-    .stat {
-      padding: 0 28px;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.4s, transform 0.4s;
-    }
-
-    .stat:first-child {
-      padding-left: 0;
-    }
-
-    .stat:last-child {
-      padding-right: 0;
-    }
-
-    .stat.visible {
-      opacity: 1;
-      transform: none;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .stat-value {
-      font-family: var(--font-ui);
-      font-size: 36px;
-      font-weight: 700;
-      color: var(--bright);
-      letter-spacing: -0.02em;
-      transition: color 0.15s;
-    }
-
-    .stat-value.flash {
-      color: var(--accent);
-    }
-
-    .stat-sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    /* ── BLOCK FEED ── */
-    .feed-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0 12px;
-    }
-
-    .feed-title {
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .feed-count {
-      font-size: 12px;
-      color: var(--dim);
-    }
-
-    .feed {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .block-row {
-      display: grid;
-      grid-template-columns: 100px 1fr 120px 150px;
-      align-items: center;
-      padding: 11px 14px;
-      background: var(--surface);
-      border: 1px solid transparent;
-      cursor: default;
-      transition: border-color 0.2s, background 0.2s;
-      animation: slideIn 0.3s ease both;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-
-    .block-row:hover {
-      background: #141414;
-      border-color: var(--border);
-    }
-
-    .block-row.new-block {
-      animation: flashIn 0.6s ease both;
-    }
-
-    @keyframes flashIn {
-      0% {
-        background: rgba(0, 229, 255, 0.1);
-        border-color: var(--accent);
-      }
-
-      100% {
-        background: var(--surface);
-        border-color: transparent;
-      }
-    }
-
-    .block-height {
-      font-weight: 500;
-      color: var(--accent);
-      font-size: 14px;
-    }
-
-    .block-bar-wrap {
-      padding: 0 16px;
-    }
-
-    .block-bar {
-      height: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .block-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 0.6;
-    }
-
-    .block-txcount {
-      text-align: right;
-      color: var(--bright);
-      font-size: 14px;
-    }
-
-    .block-txcount span {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .block-time {
-      text-align: right;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    /* ── PULSE RING ── */
-    @keyframes pulse-ring {
-      0% {
-        transform: scale(0.8);
-        opacity: 0.8;
-      }
-
-      100% {
-        transform: scale(2.2);
-        opacity: 0;
-      }
-    }
-
-    .dot-wrap {
-      position: relative;
-      width: 7px;
-      height: 7px;
-    }
-
     .dot-wrap .ring {
       position: absolute;
       inset: 0;
@@ -318,34 +124,24 @@
       opacity: 0;
     }
 
-    /* ── FOOTER ── */
-    footer {
-      padding: 16px 0 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--dim);
-      letter-spacing: 0.04em;
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(2.4);
+        opacity: 0;
+      }
     }
 
-    /* ── EMPTY STATE ── */
-    .empty {
-      padding: 40px 0;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    /* ── TICKER TAPE ── */
+    /* ── TICKER ── */
     .ticker {
-      overflow: hidden;
-      border-bottom: 1px solid var(--border);
-      padding: 8px 0;
       position: relative;
+      overflow: hidden;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
     }
 
     .ticker::before,
@@ -372,21 +168,11 @@
       display: flex;
       gap: 40px;
       white-space: nowrap;
-      animation: ticker 30s linear infinite;
-      font-size: 12px;
+      animation: scroll-ticker 30s linear infinite;
+      font-size: 11px;
       color: var(--muted);
       letter-spacing: 0.08em;
       text-transform: uppercase;
-    }
-
-    @keyframes ticker {
-      0% {
-        transform: translateX(0);
-      }
-
-      100% {
-        transform: translateX(-50%);
-      }
     }
 
     .ticker-item {
@@ -398,24 +184,32 @@
       color: var(--text);
     }
 
+    @keyframes scroll-ticker {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
     /* ── ROCKET LANE ── */
     .rocket-lane {
       position: relative;
-      height: 72px;
+      height: 58px;
       overflow: hidden;
       border-bottom: 1px solid var(--border);
-      background: var(--bg);
     }
 
     .rocket {
       position: absolute;
+      left: -36px;
       font-size: 20px;
-      top: 0;
-      left: -40px;
+      line-height: 1;
+      user-select: none;
       animation: fly linear forwards;
       will-change: transform;
-      user-select: none;
-      line-height: 1;
     }
 
     @keyframes fly {
@@ -424,15 +218,93 @@
       }
 
       to {
-        transform: translateX(calc(100vw + 80px));
+        transform: translateX(calc(100vw + 72px));
       }
+    }
+
+    /* ── HERO STATS ── */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr 1px 1fr 1px 1fr;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .divider-v {
+      background: var(--border);
+    }
+
+    .stat {
+      padding: 0 22px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.4s, transform 0.4s;
+    }
+
+    .stat:first-child {
+      padding-left: 0;
+    }
+
+    .stat:last-child {
+      padding-right: 0;
+    }
+
+    .stat.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: var(--ui);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--bright);
+      letter-spacing: -0.02em;
+      transition: color 0.15s;
+      line-height: 1.1;
+    }
+
+    .stat-value.flash {
+      color: var(--accent);
+    }
+
+    .stat-value.small {
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 14px 0 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.04em;
+      margin-top: 40px;
     }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 640px) {
       .hero {
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 20px 0;
       }
 
       .divider-v {
@@ -443,12 +315,12 @@
         padding: 0;
       }
 
-      .block-row {
-        grid-template-columns: 80px 1fr 90px;
+      .stat-value {
+        font-size: 26px;
       }
 
-      .block-time {
-        display: none;
+      .stat-value.small {
+        font-size: 16px;
       }
     }
   </style>
@@ -457,7 +329,6 @@
 <body>
   <div class="shell">
 
-    <!-- HEADER -->
     <header>
       <div class="logo"><img src="./nexa-logo-mark.png" alt="Nexa" width="64"> NEXA<span> BLOCK </span>FEED</div>
       <div class="status-bar">
@@ -468,9 +339,8 @@
       </div>
     </header>
 
-    <!-- TICKER -->
     <div class="ticker">
-      <div class="ticker-inner" id="ticker">
+      <div class="ticker-inner">
         <span class="ticker-item"><b>NEXA</b> BLOCK FEED</span>
         <span class="ticker-item"><b>NETWORK</b> LIVE MONITOR</span>
         <span class="ticker-item"><b>AVG BLOCK</b> ~2 MIN</span>
@@ -482,12 +352,9 @@
       </div>
     </div>
 
-    <!-- ROCKET LANE -->
     <div class="rocket-lane" id="rocketLane"></div>
 
-    <!-- MAIN -->
     <main>
-      <!-- HERO STATS -->
       <div class="hero">
         <div class="stat" id="statHeight">
           <div class="stat-label">Latest Block</div>
@@ -498,7 +365,7 @@
         <div class="stat" id="statTx">
           <div class="stat-label">Transactions</div>
           <div class="stat-value" id="valTx">—</div>
-          <div class="stat-sub">in last block</div>
+          <div class="stat-sub">confirmed</div>
         </div>
         <div class="divider-v"></div>
         <div class="stat" id="statTime">
@@ -506,31 +373,21 @@
           <div class="stat-value" id="valTime">—</div>
           <div class="stat-sub" id="valTimeAgo"></div>
         </div>
-      </div>
-
-      <!-- FEED -->
-      <div class="feed-header">
-        <div class="feed-title">Block History</div>
-        <div class="feed-count" id="feedCount">0 blocks</div>
-      </div>
-      <div class="feed" id="feed">
-        <div class="empty" id="emptyState">WAITING FOR BLOCKS…</div>
+        <div class="divider-v"></div>
+        <div class="stat" id="statPrice">
+          <div class="stat-label">NEXA / USD</div>
+          <div class="stat-value small" id="valPrice">—</div>
+          <div class="stat-sub" id="valPriceChange"></div>
+        </div>
       </div>
     </main>
 
-    <!-- FOOTER -->
     <footer>
-      <span>NEXA BLOCKCHAIN BLOCK FEED VISUALIZATION by NOTA</span>
-      <span id="footerTs">—</span>
+      <span>NEXA BLOCKCHAIN</span>
     </footer>
 
   </div>
-
   <script>
-    // ── STATE ──
-    const MAX_ROWS = 10;
-    const blocks = [];
-
     // ── DOM ──
     const dot = document.getElementById('dot');
     const dotWrap = document.getElementById('dotWrap');
@@ -539,55 +396,23 @@
     const valTx = document.getElementById('valTx');
     const valTime = document.getElementById('valTime');
     const valTimeAgo = document.getElementById('valTimeAgo');
-    const feed = document.getElementById('feed');
-    const feedCount = document.getElementById('feedCount');
-    const emptyState = document.getElementById('emptyState');
-    const footerTs = document.getElementById('footerTs');
+    const valPrice = document.getElementById('valPrice');
+    const valPriceChange = document.getElementById('valPriceChange');
     const rocketLane = document.getElementById('rocketLane');
 
-    // Stagger hero stats in
-    setTimeout(() => document.getElementById('statHeight').classList.add('visible'), 100);
-    setTimeout(() => document.getElementById('statTx').classList.add('visible'), 220);
-    setTimeout(() => document.getElementById('statTime').classList.add('visible'), 340);
+    // stagger hero stats in
+    ['statHeight', 'statTx', 'statTime', 'statPrice'].forEach((id, i) =>
+      setTimeout(() => document.getElementById(id).classList.add('visible'), 80 + i * 110)
+    );
 
-    // ── ROCKETS ──
-    const MAX_ROCKETS = 100;
-    const STAGGER_MS = 180; // delay between each rocket launch
+    let lastBlockTs = null;
 
-    function launchRockets(txCount) {
-      const count = Math.min(Math.max(txCount, 1), MAX_ROCKETS);
-      const laneH = rocketLane.clientHeight;
-
-      for (let i = 0; i < count; i++) {
-        setTimeout(() => {
-          const el = document.createElement('span');
-          el.className = 'rocket';
-          el.textContent = '🚀';
-
-          // random vertical position within lane with padding
-          const topPx = 8 + Math.random() * (laneH - 36);
-          // random speed 6.5s – 8.5s
-          const dur = (6500 + Math.random() * 2000).toFixed(0);
-
-          el.style.top = `${topPx}px`;
-          el.style.animationDuration = `${dur}ms`;
-
-          rocketLane.appendChild(el);
-
-          // clean up after animation completes
-          el.addEventListener('animationend', () => el.remove(), { once: true });
-        }, i * STAGGER_MS);
-      }
-    }
-
-    // ── SOCKET ──
-    const es = new EventSource("/stream");
-
-    es.onopen = () => setStatus("live", "LIVE");
-    es.onerror = () => setStatus("error", "DISCONNECTED");
+    // ── SSE ──
+    const es = new EventSource('/stream');
+    es.onopen = () => setStatus('live', 'LIVE');
+    es.onerror = () => setStatus('error', 'DISCONNECTED');
     es.onmessage = (e) => {
       const block = JSON.parse(e.data);
-      addBlock(block, true);
       updateHero(block);
       updateFooter();
       if (block.txCount) launchRockets(block.txCount);
@@ -597,7 +422,6 @@
     function setStatus(state, label) {
       dot.className = 'dot ' + state;
       statusText.textContent = label;
-
       if (state === 'live') {
         const ring = document.createElement('div');
         ring.className = 'ring';
@@ -608,13 +432,11 @@
 
     // ── HERO ──
     function updateHero(block) {
-      const ts = new Date(block.timestamp);
-
+      lastBlockTs = new Date(block.timestamp);
       flashValue(valHeight, fmt(block.height));
-      flashValue(valTx, fmt(block.txCount));
-
-      valTime.textContent = ts.toLocaleTimeString('en-US', { hour12: false });
-      valTimeAgo.textContent = timeAgo(ts);
+      flashValue(valTx, block.txCount != null ? fmt(block.txCount) : '—');
+      valTime.textContent = lastBlockTs.toLocaleTimeString();
+      valTimeAgo.textContent = timeAgo(lastBlockTs);
     }
 
     function flashValue(el, val) {
@@ -623,75 +445,60 @@
       setTimeout(() => el.classList.remove('flash'), 400);
     }
 
-    // ── FEED ROW ──
-    function addBlock(block, isNew = false) {
-      if (emptyState) emptyState.remove();
+    // ── ROCKETS ──
+    const MAX_ROCKETS = 100;
+    const STAGGER_MS = 160;
 
-      blocks.unshift(block);
-      if (blocks.length > MAX_ROWS) blocks.pop();
-
-      const maxTx = Math.max(...blocks.map(b => b.txCount), 1);
-      const pct = Math.round((block.txCount / maxTx) * 100);
-
-      const row = document.createElement('div');
-      row.className = 'block-row' + (isNew ? ' new-block' : '');
-      row.innerHTML = `
-      <div class="block-height">#${fmt(block.height)}</div>
-      <div class="block-bar-wrap">
-        <div class="block-bar">
-          <div class="block-bar-fill" style="width:0%" data-pct="${pct}"></div>
-        </div>
-      </div>
-      <div class="block-txcount">${fmt(block.txCount)} <span>tx</span></div>
-      <div class="block-time">${fmtTime(block.timestamp)}</div>
-    `;
-
-      feed.insertBefore(row, feed.firstChild);
-
-      // animate bar after paint
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          row.querySelector('.block-bar-fill').style.width = pct + '%';
-        });
-      });
-
-      // trim old rows
-      while (feed.children.length > MAX_ROWS) {
-        feed.removeChild(feed.lastChild);
+    function launchRockets(txCount) {
+      const count = Math.min(Math.max(txCount, 1), MAX_ROCKETS);
+      const laneH = rocketLane.clientHeight;
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const el = document.createElement('span');
+          el.className = 'rocket';
+          el.textContent = '🚀';
+          el.style.top = `${5 + Math.random() * (laneH - 28)}px`;
+          el.style.animationDuration = `${(6500 + Math.random() * 2000).toFixed(0)}ms`;
+          rocketLane.appendChild(el);
+          el.addEventListener('animationend', () => el.remove(), { once: true });
+        }, i * STAGGER_MS);
       }
-
-      feedCount.textContent = `${blocks.length} block${blocks.length !== 1 ? 's' : ''}`;
-
-      // rescale all bars
-      rescaleBars();
     }
 
-    function rescaleBars() {
-      const maxTx = Math.max(...blocks.map(b => b.txCount), 1);
-      const rows = feed.querySelectorAll('.block-row');
-      rows.forEach((row, i) => {
-        const fill = row.querySelector('.block-bar-fill');
-        if (fill && blocks[i]) {
-          fill.style.width = Math.round((blocks[i].txCount / maxTx) * 100) + '%';
+    // ── PRICE ──
+    const PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=nexacoin&vs_currencies=usd&include_24hr_change=true';
+    const PRICE_REFRESH_MS = 15 * 60 * 1000; // refresh every 15 min
+
+    async function fetchPrice() {
+      try {
+        const res = await fetch(PRICE_URL);
+        const data = await res.json();
+        const usd = data?.nexacoin?.usd;
+        const change = data?.nexacoin?.usd_24h_change;
+        if (usd == null) return;
+
+        // FIXED: show decimals instead of scientific notation
+        valPrice.textContent =
+          usd < 0.001
+            ? `$${usd.toFixed(10)}`
+            : `$${usd.toFixed(6)}`;
+
+        if (change != null) {
+          const sign = change >= 0 ? '+' : '';
+          valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
+          valPriceChange.style.color =
+            change >= 0 ? 'var(--accent)' : 'var(--accent2)';
         }
-      });
+      } catch (e) {
+        console.warn('Price fetch failed:', e.message);
+      }
     }
 
-    // ── FOOTER ──
-    function updateFooter() {
-      footerTs.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
-    }
+    fetchPrice();
+    setInterval(fetchPrice, PRICE_REFRESH_MS);
 
     // ── UTILS ──
-    function fmt(n) {
-      return Number(n).toLocaleString('en-US');
-    }
-
-    function fmtTime(iso) {
-      return new Date(iso).toLocaleTimeString('en-US', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-      });
-    }
+    function fmt(n) { return Number(n).toLocaleString(); }
 
     function timeAgo(date) {
       const s = Math.floor((Date.now() - date) / 1000);
@@ -700,11 +507,11 @@
       return `${Math.floor(s / 3600)}h ago`;
     }
 
-    // live timeAgo refresh
     setInterval(() => {
-      if (blocks[0]) valTimeAgo.textContent = timeAgo(new Date(blocks[0].timestamp));
-    }, 10_000);
+      if (lastBlockTs) valTimeAgo.textContent = timeAgo(lastBlockTs);
+    }, 15_000);
   </script>
+
 </body>
 
 </html>
