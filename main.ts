@@ -9,9 +9,8 @@ interface RostrumServer { host: string; port: number; protocol: string; }
 
 const SERVERS: RostrumServer[] = [
   { host: "electrum.nexa.org", port: 20004, protocol: "wss" },
-  { host: "rostrum.otoplo.com", port: 443, protocol: "wss" },
   { host: "onekey-electrum.bitcoinunlimited.info", port: 20004, protocol: "wss" },
-  { host: "rostrum.nexa.ink", port: 20004, protocol: "wss" },
+  { host: "rostrum.otoplo.com", port: 443, protocol: "wss" },
   { host: "electrum.nexa.org", port: 20003, protocol: "ws" },
 ];
 
@@ -201,17 +200,22 @@ async function onOpen() {
 
     if (result?.hex) {
       const parsed = parseNexaHeader(result.hex);
-      lastKnownBlock = {
-        height: result.height,
-        txCount: parsed.txCount,
-        timestamp: parsed.timestamp,
-        source: "subscribe-ack",
-      };
-      broadcast(lastKnownBlock);
-      //console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
+      // Only broadcast if this is actually a new block we haven't seen
+      if (!lastKnownBlock || result.height > lastKnownBlock.height) {
+        lastKnownBlock = {
+          height: result.height,
+          txCount: parsed.txCount,
+          timestamp: parsed.timestamp,
+          source: "subscribe-ack",
+        };
+        broadcast(lastKnownBlock);
+        console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
+      } else {
+        console.log(`📦 Tip #${result.height} already known — skipping broadcast`);
+      }
     }
 
-    //console.log("✅ Subscribed to new blocks");
+    console.log("✅ Subscribed to new blocks");
   } catch (err) {
     console.error("Handshake error:", (err as Error).message);
   }
@@ -235,13 +239,18 @@ function onMessage(event: MessageEvent) {
     if (!header?.hex) return;
     try {
       const parsed = parseNexaHeader(header.hex);
+      // Ignore if same or older height than what we already have
+      if (lastKnownBlock && header.height <= lastKnownBlock.height) {
+        console.log(`⚠️  Stale push #${header.height} (have #${lastKnownBlock.height}) — skipping`);
+        return;
+      }
       lastKnownBlock = {
         height: header.height,
         txCount: parsed.txCount,
         timestamp: parsed.timestamp,
       };
       broadcast(lastKnownBlock);
-      //console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
+      console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
     } catch (e) {
       console.error("Header parse error:", (e as Error).message);
     }
@@ -318,4 +327,4 @@ setInterval(() => {
 
 connect();
 
-app.listen(8000, () => console.log("🚀 Nexa TX Visualizer → http://localhost:8000"));
+app.listen(8000, () => console.log(`🚀 Nexa TX Visualizer → http://localhost:8000`));
