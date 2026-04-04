@@ -14,9 +14,9 @@ const SERVERS: RostrumServer[] = [
   { host: "electrum.nexa.org", port: 20003, protocol: "ws" },
 ];
 
-const PING_INTERVAL = 15_000;
-const HEALTH_CHECK_INTERVAL = 20_000;
-const STALE_THRESHOLD = 45_000;
+const PING_INTERVAL = 20_000;
+//const HEALTH_CHECK_INTERVAL = 20_000;
+//const STALE_THRESHOLD = 45_000;
 const MAX_RECONNECT_DELAY = 60_000;
 
 // ============================================================================
@@ -32,7 +32,7 @@ let isConnected = false;
 let isReconnecting = false;
 let reconnectAttempts = 0;
 let serverIndex = 0;
-let lastMessageAt = Date.now();
+//let lastMessageAt = Date.now();
 let pingTimer: number | null = null;
 let lastKnownBlock: Block | null = null;
 
@@ -190,7 +190,7 @@ async function onOpen() {
   isConnected = true;
   isReconnecting = false;
   reconnectAttempts = 0;
-  lastMessageAt = Date.now();
+  //lastMessageAt = Date.now();
 
   startPing();
 
@@ -209,20 +209,20 @@ async function onOpen() {
           source: "subscribe-ack",
         };
         broadcast(lastKnownBlock);
-        console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
+        //console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
       } else {
-        console.log(`📦 Tip #${result.height} already known — skipping broadcast`);
+        //console.log(`📦 Tip #${result.height} already known — skipping broadcast`);
       }
     }
 
-    console.log("✅ Subscribed to new blocks");
+    //console.log("✅ Subscribed to new blocks");
   } catch (err) {
     console.error("Handshake error:", (err as Error).message);
   }
 }
 
 function onMessage(event: MessageEvent) {
-  lastMessageAt = Date.now();
+  //lastMessageAt = Date.now();
 
   let msg: any;
   try { msg = JSON.parse(event.data); }
@@ -241,7 +241,7 @@ function onMessage(event: MessageEvent) {
       const parsed = parseNexaHeader(header.hex);
       // Ignore if same or older height than what we already have
       if (lastKnownBlock && header.height <= lastKnownBlock.height) {
-        console.log(`⚠️  Stale push #${header.height} (have #${lastKnownBlock.height}) — skipping`);
+        //console.log(`⚠️  Stale push #${header.height} (have #${lastKnownBlock.height}) — skipping`);
         return;
       }
       lastKnownBlock = {
@@ -250,7 +250,7 @@ function onMessage(event: MessageEvent) {
         timestamp: parsed.timestamp,
       };
       broadcast(lastKnownBlock);
-      console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
+      //console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
     } catch (e) {
       console.error("Header parse error:", (e as Error).message);
     }
@@ -278,7 +278,7 @@ function scheduleReconnect() {
   isReconnecting = true;
   reconnectAttempts++;
   const delay = Math.min(3_000 * 1.5 ** reconnectAttempts, MAX_RECONNECT_DELAY);
-  console.log(`🔄 Reconnecting in ${(delay / 1000).toFixed(1)}s…`);
+  //console.log(`🔄 Reconnecting in ${(delay / 1000).toFixed(1)}s...`);
   setTimeout(() => {
     serverIndex = (serverIndex + 1) % SERVERS.length;
     connect();
@@ -305,7 +305,7 @@ function stopPing() {
 // ============================================================================
 // HEALTH CHECK
 // ============================================================================
-
+/*
 setInterval(() => {
   if (isReconnecting) return;
   if (!isConnected) {
@@ -320,7 +320,7 @@ setInterval(() => {
     scheduleReconnect();
   }
 }, HEALTH_CHECK_INTERVAL);
-
+*/
 // ============================================================================
 // START
 // ============================================================================
