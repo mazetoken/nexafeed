@@ -178,7 +178,7 @@ box-sizing: border-box;
 </div>
 
 <div class="footer">
-  <a href="https://nexafeed.nota.deno.net" target="_blank" rel="noopener">nexa.org</a>
+  <a href="https://nexafeed.nota.deno.net" target="_blank" rel="noopener">Nexa Block Feed</a>
 </div>
 '
 
@@ -291,19 +291,19 @@ box-sizing: border-box;
         const change = data?.nexacoin?.usd_24h_change;
         if (usd == null) return;
 
-        valPrice.textContent = usd < 0.001
+        this._valPrice.textContent = usd < 0.001
           ? `$${usd.toFixed(10)}`
           : `$${usd.toFixed(6)}`;
 
         if (change != null) {
           const sign = change >= 0 ? '+' : '';
-          valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
-          valPriceChange.style.color = change >= 0 ? '#00e5ff' : '#ff6b00';
+          this._valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
+          this._valPriceChange.style.color = change >= 0 ? '#00e5ff' : '#ff6b00';
         }
       } catch (e) {
         console.warn('[nexa-widget] price fetch failed:', e.message);
       }
-      setTimeout(() => fetchPrice(), PRICE_TTL);
+      setTimeout(() => this._fetchPrice(), PRICE_TTL);
     }
 
     _refreshTimeAgo() {
