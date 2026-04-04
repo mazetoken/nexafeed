@@ -34,11 +34,9 @@
     }
 
     html { height: -webkit-fill-available; }
-    body { min-height: -webkit-fill-available; }
 
-    html,
     body {
-      /*height: 100%;*/
+      min-height: -webkit-fill-available;
       background: var(--bg);
       color: var(--text);
       font-family: var(--mono);
@@ -386,8 +384,7 @@
     </main>
 
     <footer>
-      <span>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.1</span>
-      <!-- <span id="footerTs"></span> -->
+      <span>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.1.<br>Donations: nexa:nqtsq5g5np26gcu0jpcjhsfwpqlhrq59gceegaxnpz20kmcy</span>
     </footer>
 
   </div>
@@ -403,7 +400,6 @@
     const valPrice = document.getElementById('valPrice');
     const valPriceChange = document.getElementById('valPriceChange');
     const rocketLane = document.getElementById('rocketLane');
-    //const footerTs = document.getElementById('footerTs');
 
     // stagger hero stats in
     ['statHeight', 'statTx', 'statTime', 'statPrice'].forEach((id, i) =>
@@ -441,7 +437,6 @@
       flashValue(valHeight, fmt(block.height));
       flashValue(valTx, block.txCount != null ? fmt(block.txCount) : '—');
       valTime.textContent = lastBlockTs.toLocaleTimeString('en-US', { hour12: false });
-      //valTime.textContent = lastBlockTs.toLocaleTimeString();
       valTimeAgo.textContent = timeAgo(lastBlockTs);
     }
 
@@ -501,11 +496,6 @@
 
     fetchPrice();
     setInterval(fetchPrice, PRICE_REFRESH_MS);
-
-    // ── FOOTER ──
-    //function updateFooter() {
-    //footerTs.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
-    //}
 
     // ── UTILS ──
     function fmt(n) { return Number(n).toLocaleString(); }
