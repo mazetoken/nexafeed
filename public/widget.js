@@ -178,7 +178,6 @@ box-sizing: border-box;
 </div>
 
 <div class="footer">
-  <span id="footerTs">—</span>
   <a href="https://nexafeed.nota.deno.net" target="_blank" rel="noopener">nexa.org</a>
 </div>
 '
@@ -225,7 +224,6 @@ box-sizing: border-box;
       this._valPrice = s.getElementById('valPrice');
       this._valPriceChange = s.getElementById('valPriceChange');
       this._rocketLane = s.getElementById('rocketLane');
-      this._footerTs = s.getElementById('footerTs');
     }
 
     _connectSSE() {
@@ -247,7 +245,6 @@ box-sizing: border-box;
         const block = JSON.parse(e.data);
         const txCount = block.txCount ?? block.txcount ?? 0;
         this._updateHero({ ...block, txCount });
-        this._updateFooter();
         if (txCount > 0) this._launchRockets(txCount);
       };
     }
@@ -256,7 +253,7 @@ box-sizing: border-box;
       this._lastBlockTs = new Date(block.timestamp);
       this._flash(this._valHeight, this._fmt(block.height));
       this._flash(this._valTx, block.txCount != null ? this._fmt(block.txCount) : '—');
-      this._valTime.textContent = this._lastBlockTs.toLocaleTimeString('en-US', { hour12: false });
+      this._valTime.textContent = this._lastBlockTs.toLocaleTimeString();
       this._valTimeAgo.textContent = this._timeAgo(this._lastBlockTs);
     }
 
@@ -294,23 +291,19 @@ box-sizing: border-box;
         const change = data?.nexacoin?.usd_24h_change;
         if (usd == null) return;
 
-        this._valPrice.textContent = usd < 0.001
+        valPrice.textContent = usd < 0.001
           ? `$${usd.toFixed(10)}`
           : `$${usd.toFixed(6)}`;
 
         if (change != null) {
           const sign = change >= 0 ? '+' : '';
-          this._valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
-          this._valPriceChange.style.color = change >= 0 ? '#00e5ff' : '#ff6b00';
+          valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
+          valPriceChange.style.color = change >= 0 ? '#00e5ff' : '#ff6b00';
         }
       } catch (e) {
         console.warn('[nexa-widget] price fetch failed:', e.message);
       }
-      setTimeout(() => this._fetchPrice(), PRICE_TTL);
-    }
-
-    _updateFooter() {
-      this._footerTs.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+      setTimeout(() => fetchPrice(), PRICE_TTL);
     }
 
     _refreshTimeAgo() {
@@ -319,7 +312,7 @@ box-sizing: border-box;
       }
     }
 
-    _fmt(n) { return Number(n).toLocaleString('en-US'); }
+    _fmt(n) { return Number(n).toLocaleString(); }
 
     _timeAgo(date) {
       const s = Math.floor((Date.now() - date) / 1000);
