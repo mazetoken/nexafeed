@@ -5,11 +5,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NEXA Block Feed Visualization">
+  <meta name="description" content="Nexa Blockchain TX Visualizer">
   <meta name="web" content="https://nexafeed.nota.deno.net">
-  <meta property="og:title" content="NEXA Block Feed">
-  <meta property="og:description" content="NEXA Block Feed Visualization">
-  <title>NEXA Block Feed</title>
+  <meta property="og:title" content="Nexa Block Feed">
+  <meta property="og:description" content="Nexa Blockchain TX Visualizer">
+  <title>Nexa Block Feed</title>
   <style>
     *,
     *::before,
@@ -33,9 +33,12 @@
       --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
+    html { height: -webkit-fill-available; }
+    body { min-height: -webkit-fill-available; }
+
     html,
     body {
-      height: 100%;
+      /*height: 100%;*/
       background: var(--bg);
       color: var(--text);
       font-family: var(--mono);
@@ -383,7 +386,7 @@
     </main>
 
     <footer>
-      <span>NEXA BLOCKCHAIN</span>
+      <span>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.1</span>
       <!-- <span id="footerTs"></span> -->
     </footer>
 
