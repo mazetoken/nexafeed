@@ -10,6 +10,9 @@
   <meta property="og:title" content="Nexa Block Feed">
   <meta property="og:description" content="Nexa Blockchain TX Visualizer">
   <title>Nexa Block Feed</title>
+  <link rel="icon" type="image/png" href="./nexafeed.png">
+  <!-- Optional: For Apple devices -->
+  <link rel="apple-touch-icon" href="./nexafeed.png">
   <style>
     *,
     *::before,
@@ -55,8 +58,15 @@
       z-index: 9999;
     }
 
+    main {
+      flex: 1;
+    }
+
     .shell {
-      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 0 24px;
     }
@@ -302,7 +312,7 @@
     }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 640px) {
+    @media (max-width: 700px) {
       .hero {
         grid-template-columns: 1fr 1fr;
         gap: 20px 0;
@@ -384,7 +394,16 @@
     </main>
 
     <footer>
-      <span>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.1.<br>Donations: nexa:nqtsq5g5np26gcu0jpcjhsfwpqlhrq59gceegaxnpz20kmcy</span>
+      <span>
+        <p>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.2</p>
+        <br>
+        <!-- <p>Add widget to your website:</p>
+        <pre><code>&lt;script src="https://nexafeed.nota.deno.net/widget.js"&gt;&lt;/script&gt;
+          &lt;nexa-widget&gt;&lt;/nexa-widget&gt;
+        </code></pre> -->
+        <p>by >HEY-NOTA | 2026</p>
+        <p>Donations: nexa:nqtsq5g5np26gcu0jpcjhsfwpqlhrq59gceegaxnpz20kmcy</p>
+      </span>
     </footer>
 
   </div>
@@ -415,7 +434,6 @@
     es.onmessage = (e) => {
       const block = JSON.parse(e.data);
       updateHero(block);
-      //updateFooter();
       if (block.txCount) launchRockets(block.txCount);
     };
 
