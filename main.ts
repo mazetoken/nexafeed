@@ -64,18 +64,17 @@ app.get("/stream", (req: any, res: any) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
   clients.add(res);
-  //console.log(`🖥  Client connected (${clients.size} total)`);
+  console.log(`🖥  Client connected (${clients.size} total)`);
 
   // Replay last known block immediately so the frontend isn't blank
   if (lastKnownBlock) res.write(`data: ${JSON.stringify(lastKnownBlock)}\n\n`);
 
   req.on("close", () => {
     clients.delete(res);
-    //console.log(`🖥  Client disconnected (${clients.size} total)`);
+    console.log(`🖥  Client disconnected (${clients.size} total)`);
   });
 });
 
@@ -177,7 +176,7 @@ function connect() {
   }
 
   const url = currentUrl();
-  //console.log(`🔌 Connecting to ${url} (attempt ${reconnectAttempts + 1})`);
+  console.log(`🔌 Connecting to ${url} (attempt ${reconnectAttempts + 1})`);
 
   ws = new WebSocket(url);
   ws.onopen = onOpen;
@@ -187,7 +186,7 @@ function connect() {
 }
 
 async function onOpen() {
-  //console.log(`✅ Connected to ${currentUrl()}`);
+  console.log(`✅ Connected to ${currentUrl()}`);
   isConnected = true;
   isReconnecting = false;
   reconnectAttempts = 0;
@@ -210,15 +209,15 @@ async function onOpen() {
           source: "subscribe-ack",
         };
         broadcast(lastKnownBlock);
-        //console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
+        console.log(`📦 Tip #${result.height} — ${parsed.txCount} txs`);
       } else {
-        //console.log(`📦 Tip #${result.height} already known — skipping broadcast`);
+        console.log(`📦 Tip #${result.height} already known — skipping broadcast`);
       }
     }
 
-    //console.log("✅ Subscribed to new blocks");
+    console.log("✅ Subscribed to new blocks");
   } catch (err) {
-    //console.error("Handshake error:", (err as Error).message);
+    console.error("Handshake error:", (err as Error).message);
   }
 }
 
@@ -242,7 +241,7 @@ function onMessage(event: MessageEvent) {
       const parsed = parseNexaHeader(header.hex);
       // Ignore if same or older height than what we already have
       if (lastKnownBlock && header.height <= lastKnownBlock.height) {
-        //console.log(`⚠️  Stale push #${header.height} (have #${lastKnownBlock.height}) — skipping`);
+        console.log(`⚠️  Stale push #${header.height} (have #${lastKnownBlock.height}) — skipping`);
         return;
       }
       lastKnownBlock = {
@@ -251,7 +250,7 @@ function onMessage(event: MessageEvent) {
         timestamp: parsed.timestamp,
       };
       broadcast(lastKnownBlock);
-      //console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
+      console.log(`🚀 New block #${header.height} — ${parsed.txCount} txs`);
     } catch (e) {
       console.error("Header parse error:", (e as Error).message);
     }
@@ -262,12 +261,12 @@ function onClose(event: CloseEvent) {
   isConnected = false;
   stopPing();
   clearAllPending();
-  //console.log(`⚠️  Disconnected (code ${event.code})`);
+  console.log(`⚠️  Disconnected (code ${event.code})`);
   scheduleReconnect();
 }
 
 function onError(event: Event) {
-  //console.error("WebSocket error:", (event as ErrorEvent).message ?? "unknown");
+  console.error("WebSocket error:", (event as ErrorEvent).message ?? "unknown");
 }
 
 // ============================================================================
@@ -279,7 +278,7 @@ function scheduleReconnect() {
   isReconnecting = true;
   reconnectAttempts++;
   const delay = Math.min(3_000 * 1.5 ** reconnectAttempts, MAX_RECONNECT_DELAY);
-  //console.log(`🔄 Reconnecting in ${(delay / 1000).toFixed(1)}s...`);
+  console.log(`🔄 Reconnecting in ${(delay / 1000).toFixed(1)}s…`);
   setTimeout(() => {
     serverIndex = (serverIndex + 1) % SERVERS.length;
     connect();
@@ -310,12 +309,12 @@ function stopPing() {
 setInterval(() => {
   if (isReconnecting) return;
   if (!isConnected) {
-    //console.log("🏥 Health: not connected — reconnecting");
+    console.log("🏥 Health: not connected — reconnecting");
     scheduleReconnect();
     return;
   }
   if (Date.now() - lastMessageAt > STALE_THRESHOLD) {
-    //console.log("🏥 Health: stale — forcing reconnect");
+    console.log("🏥 Health: stale — forcing reconnect");
     isConnected = false;
     ws?.close();
     scheduleReconnect();
@@ -328,5 +327,4 @@ setInterval(() => {
 
 connect();
 
-//app.listen(8000, () => console.log(`🚀 Nexa TX Visualizer → http://localhost:8000`));
-app.listen();
+app.listen(8000, () => console.log(`🚀 Nexa TX Visualizer → http://localhost:8000`));
