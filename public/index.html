@@ -384,6 +384,7 @@
 
     <footer>
       <span>NEXA BLOCKCHAIN</span>
+      <!-- <span id="footerTs"></span> -->
     </footer>
 
   </div>
@@ -399,6 +400,7 @@
     const valPrice = document.getElementById('valPrice');
     const valPriceChange = document.getElementById('valPriceChange');
     const rocketLane = document.getElementById('rocketLane');
+    //const footerTs = document.getElementById('footerTs');
 
     // stagger hero stats in
     ['statHeight', 'statTx', 'statTime', 'statPrice'].forEach((id, i) =>
@@ -414,7 +416,7 @@
     es.onmessage = (e) => {
       const block = JSON.parse(e.data);
       updateHero(block);
-      updateFooter();
+      //updateFooter();
       if (block.txCount) launchRockets(block.txCount);
     };
 
@@ -435,7 +437,8 @@
       lastBlockTs = new Date(block.timestamp);
       flashValue(valHeight, fmt(block.height));
       flashValue(valTx, block.txCount != null ? fmt(block.txCount) : '—');
-      valTime.textContent = lastBlockTs.toLocaleTimeString();
+      valTime.textContent = lastBlockTs.toLocaleTimeString('en-US', { hour12: false });
+      //valTime.textContent = lastBlockTs.toLocaleTimeString();
       valTimeAgo.textContent = timeAgo(lastBlockTs);
     }
 
@@ -467,7 +470,7 @@
 
     // ── PRICE ──
     const PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=nexacoin&vs_currencies=usd&include_24hr_change=true';
-    const PRICE_REFRESH_MS = 15 * 60 * 1000; // refresh every 15 min
+    const PRICE_REFRESH_MS = 5 * 60 * 1000; // refresh every 5 min
 
     async function fetchPrice() {
       try {
@@ -477,25 +480,29 @@
         const change = data?.nexacoin?.usd_24h_change;
         if (usd == null) return;
 
-        // FIXED: show decimals instead of scientific notation
-        valPrice.textContent =
-          usd < 0.001
-            ? `$${usd.toFixed(10)}`
-            : `$${usd.toFixed(6)}`;
+
+        valPrice.textContent = usd < 0.001
+          ? `$${usd.toFixed(10)}`
+          : `$${usd.toFixed(6)}`;
 
         if (change != null) {
           const sign = change >= 0 ? '+' : '';
           valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
-          valPriceChange.style.color =
-            change >= 0 ? 'var(--accent)' : 'var(--accent2)';
+          valPriceChange.style.color = change >= 0 ? 'var(--accent)' : 'var(--accent2)';
         }
       } catch (e) {
         console.warn('Price fetch failed:', e.message);
       }
+
     }
 
     fetchPrice();
     setInterval(fetchPrice, PRICE_REFRESH_MS);
+
+    // ── FOOTER ──
+    //function updateFooter() {
+    //footerTs.textContent = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    //}
 
     // ── UTILS ──
     function fmt(n) { return Number(n).toLocaleString(); }
