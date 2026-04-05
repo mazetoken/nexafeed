@@ -59,11 +59,18 @@ function broadcast(block: Block) {
 const app = express();
 app.use(express.static("public"));
 
-// SSE endpoint — replaces socket.io
+app.options("/stream", (_req: any, res: any) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.sendStatus(204);
+});
+
+// SSE endpoint
 app.get("/stream", (req: any, res: any) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.flushHeaders();
 
   clients.add(res);
@@ -190,7 +197,6 @@ async function onOpen() {
   isConnected = true;
   isReconnecting = false;
   reconnectAttempts = 0;
-  //lastMessageAt = Date.now();
 
   startPing();
 
@@ -222,7 +228,6 @@ async function onOpen() {
 }
 
 function onMessage(event: MessageEvent) {
-  //lastMessageAt = Date.now();
 
   let msg: any;
   try { msg = JSON.parse(event.data); }
