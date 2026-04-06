@@ -1,8 +1,8 @@
-# NEXA BLOCK FEED
+# NEXA TX
 
 Nexa Blockchain TX Visualizer
 
-https://nexafeed.nota.deno.net
+https://nexatx.nota.deno.net
 
 Widget:
 
