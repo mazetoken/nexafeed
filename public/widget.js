@@ -1,5 +1,5 @@
 (() => {
-  const STREAM_URL = 'https://nexafeed.nota.deno.net/stream';
+  const STREAM_URL = 'https://nexatx.nota.deno.net/stream';
   const PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=nexacoin&vs_currencies=usd&include_24hr_change=true';
   const PRICE_TTL = 5 * 60 * 1000;
   const MAX_ROCKETS = 100;
@@ -144,7 +144,7 @@ box-sizing: border-box;
 
   const HTML = `
 <div class="header">
-<div class="logo">NEXA<span> BLOCK </span>FEED</div>
+<div class="logo">NEXA<span> TX</span></div>
 <div class="status">
 <div class="dot" id="dot"></div>
 <span id="statusText">CONNECTING</span>
@@ -178,7 +178,7 @@ box-sizing: border-box;
 </div>
 
 <div class="footer">
-  <a href="https://nexafeed.nota.deno.net" target="_blank" rel="noopener">Nexa Block Feed</a>
+  <a href="https://nexatx.nota.deno.net" target="_blank" rel="noopener">NEXA TX</a>
 </div>
 '
 
