@@ -6,6 +6,6 @@ https://nexatx.nota.deno.net
 
 Widget:
 
-```<script src="https://nexafeed.nota.deno.net/widget.js"></script>```
+```<script src="https://nexatx.nota.deno.net/widget.js"></script>```
 
 ```<nexa-widget></nexa-widget>```
