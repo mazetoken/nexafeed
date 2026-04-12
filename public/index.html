@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Nexa Blockchain TX Visualizer">
-  <meta name="web" content="https://nexatx.nota.deno.net">
+  <meta name="web" content="https://nexa.up.railway.app">
   <meta property="og:title" content="Nexa Tx">
   <meta property="og:description" content="Nexa Blockchain TX Visualizer">
   <title>NEXA TX</title>
@@ -36,7 +34,9 @@
       --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
-    html { height: -webkit-fill-available; }
+    html {
+      height: -webkit-fill-available;
+    }
 
     body {
       min-height: -webkit-fill-available;
@@ -396,140 +396,14 @@
     <footer>
       <span>
         <p>NEXA BLOCKCHAIN TX VISUALIZER v.1.0.2</p>
-        <!-- <br>
-        <p>Add widget to your website:</p>
-        <pre><code>&lt;script src="https://nexatx.nota.deno.net/widget.js"&gt;&lt;/script&gt;
-          &lt;nexa-widget&gt;&lt;/nexa-widget&gt;
-        </code></pre> -->
         <p>by >HEY-NOTA | 2026</p>
         <p>Donations: nexa:nqtsq5g5np26gcu0jpcjhsfwpqlhrq59gceegaxnpz20kmcy</p>
+        <p>Deployed on <a href="https://railway.com?referralCode=nJxTsJ" style="color:var(--accent);text-decoration:none">RAILWAY</a></p>
       </span>
     </footer>
 
   </div>
-  <script>
-    // ── DOM ──
-    const dot = document.getElementById('dot');
-    const dotWrap = document.getElementById('dotWrap');
-    const statusText = document.getElementById('statusText');
-    const valHeight = document.getElementById('valHeight');
-    const valTx = document.getElementById('valTx');
-    const valTime = document.getElementById('valTime');
-    const valTimeAgo = document.getElementById('valTimeAgo');
-    const valPrice = document.getElementById('valPrice');
-    const valPriceChange = document.getElementById('valPriceChange');
-    const rocketLane = document.getElementById('rocketLane');
 
-    // stagger hero stats in
-    ['statHeight', 'statTx', 'statTime', 'statPrice'].forEach((id, i) =>
-      setTimeout(() => document.getElementById(id).classList.add('visible'), 80 + i * 110)
-    );
-
-    let lastBlockTs = null;
-
-    // ── SSE ──
-    const es = new EventSource('/stream');
-    es.onopen = () => setStatus('live', 'LIVE');
-    es.onerror = () => setStatus('error', 'DISCONNECTED');
-    es.onmessage = (e) => {
-      const block = JSON.parse(e.data);
-      updateHero(block);
-      if (block.txCount) launchRockets(block.txCount);
-    };
-
-    // ── STATUS ──
-    function setStatus(state, label) {
-      dot.className = 'dot ' + state;
-      statusText.textContent = label;
-      if (state === 'live') {
-        const ring = document.createElement('div');
-        ring.className = 'ring';
-        dotWrap.appendChild(ring);
-        setTimeout(() => ring.remove(), 2000);
-      }
-    }
-
-    // ── HERO ──
-    function updateHero(block) {
-      lastBlockTs = new Date(block.timestamp);
-      flashValue(valHeight, fmt(block.height));
-      flashValue(valTx, block.txCount != null ? fmt(block.txCount) : '—');
-      valTime.textContent = lastBlockTs.toLocaleTimeString('en-US', { hour12: false });
-      valTimeAgo.textContent = timeAgo(lastBlockTs);
-    }
-
-    function flashValue(el, val) {
-      el.textContent = val;
-      el.classList.add('flash');
-      setTimeout(() => el.classList.remove('flash'), 400);
-    }
-
-    // ── ROCKETS ──
-    const MAX_ROCKETS = 100;
-    const STAGGER_MS = 160;
-
-    function launchRockets(txCount) {
-      const count = Math.min(Math.max(txCount, 1), MAX_ROCKETS);
-      const laneH = rocketLane.clientHeight;
-      for (let i = 0; i < count; i++) {
-        setTimeout(() => {
-          const el = document.createElement('span');
-          el.className = 'rocket';
-          el.textContent = '🚀';
-          el.style.top = `${5 + Math.random() * (laneH - 28)}px`;
-          el.style.animationDuration = `${(6500 + Math.random() * 2000).toFixed(0)}ms`;
-          rocketLane.appendChild(el);
-          el.addEventListener('animationend', () => el.remove(), { once: true });
-        }, i * STAGGER_MS);
-      }
-    }
-
-    // ── PRICE ──
-    const PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=nexacoin&vs_currencies=usd&include_24hr_change=true';
-    const PRICE_REFRESH_MS = 5 * 60 * 1000; // refresh every 5 min
-
-    async function fetchPrice() {
-      try {
-        const res = await fetch(PRICE_URL);
-        const data = await res.json();
-        const usd = data?.nexacoin?.usd;
-        const change = data?.nexacoin?.usd_24h_change;
-        if (usd == null) return;
-
-
-        valPrice.textContent = usd < 0.001
-          ? `$${usd.toFixed(10)}`
-          : `$${usd.toFixed(6)}`;
-
-        if (change != null) {
-          const sign = change >= 0 ? '+' : '';
-          valPriceChange.textContent = `${sign}${change.toFixed(2)}% 24h`;
-          valPriceChange.style.color = change >= 0 ? 'var(--accent)' : 'var(--accent2)';
-        }
-      } catch (e) {
-        console.warn('Price fetch failed:', e.message);
-      }
-
-    }
-
-    fetchPrice();
-    setInterval(fetchPrice, PRICE_REFRESH_MS);
-
-    // ── UTILS ──
-    function fmt(n) { return Number(n).toLocaleString(); }
-
-    function timeAgo(date) {
-      const s = Math.floor((Date.now() - date) / 1000);
-      if (s < 60) return `${s}s ago`;
-      if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-      return `${Math.floor(s / 3600)}h ago`;
-    }
-
-    setInterval(() => {
-      if (lastBlockTs) valTimeAgo.textContent = timeAgo(lastBlockTs);
-    }, 15_000);
-  </script>
-
+  <script src="./app.js"></script>
 </body>
-
 </html>
